@@ -80,9 +80,9 @@ __global__ void move_gpu (particle_t * particles, int n, double size)
 
 
 int main( int argc, char **argv )
-{    
+{
     // This takes a few seconds to initialize the runtime
-    cudaThreadSynchronize(); 
+    cudaDeviceSynchronize();
 
     if( find_option( argc, argv, "-h" ) >= 0 )
     {
@@ -92,11 +92,11 @@ int main( int argc, char **argv )
         printf( "-o <filename> to specify the output file name\n" );
         return 0;
     }
-    
+
     int n = read_int( argc, argv, "-n", 1000 );
 
     char *savename = read_string( argc, argv, "-o", NULL );
-    
+
     FILE *fsave = savename ? fopen( savename, "w" ) : NULL;
     particle_t *particles = (particle_t*) malloc( n * sizeof(particle_t) );
 
@@ -108,19 +108,19 @@ int main( int argc, char **argv )
 
     init_particles( n, particles );
 
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     double copy_time = read_timer( );
 
     // Copy the particles to the GPU
     cudaMemcpy(d_particles, particles, n * sizeof(particle_t), cudaMemcpyHostToDevice);
 
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     copy_time = read_timer( ) - copy_time;
-    
+
     //
     //  simulate a number of time steps
     //
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     double simulation_time = read_timer( );
 
     for( int step = 0; step < NSTEPS; step++ )
@@ -131,12 +131,12 @@ int main( int argc, char **argv )
 
 	int blks = (n + NUM_THREADS - 1) / NUM_THREADS;
 	compute_forces_gpu <<< blks, NUM_THREADS >>> (d_particles, n);
-        
+
         //
         //  move particles
         //
 	move_gpu <<< blks, NUM_THREADS >>> (d_particles, n, size);
-        
+
         //
         //  save if necessary
         //
@@ -146,16 +146,16 @@ int main( int argc, char **argv )
             save( fsave, n, particles);
 	}
     }
-    cudaThreadSynchronize();
+    cudaDeviceSynchronize();
     simulation_time = read_timer( ) - simulation_time;
-    
+
     printf( "CPU-GPU copy time = %g seconds\n", copy_time);
     printf( "n = %d, simulation time = %g seconds\n", n, simulation_time );
-    
+
     free( particles );
     cudaFree(d_particles);
     if( fsave )
         fclose( fsave );
-    
+
     return 0;
 }
