@@ -1,42 +1,31 @@
-#
-# Edison - NERSC 
-#
-# Intel Compilers are loaded by default; for other compilers please check the module list
-#
-CC = CC
-MPCC = CC
-OPENMP = -openmp #Note: this is the flag for Intel compilers. Change this to -fopenmp for GNU compilers. See http://www.nersc.gov/users/computational-systems/edison/programming/using-openmp/
-CFLAGS = -O3
-LIBS =
+# Load CUDA using the following command
+# module load cuda
 
+#
+# Stampede
+#
+CC = nvcc
+MPCC = nvcc
+OPENMP = 
+CFLAGS = -O3 -arch=sm_35
+NVCCFLAGS = -O3 -arch=sm_35
+LIBS = -lm
 
-TARGETS = serial pthreads openmp mpi autograder
+TARGETS = serial gpu
 
 all:	$(TARGETS)
 
 serial: serial.o common.o
 	$(CC) -o $@ $(LIBS) serial.o common.o
-autograder: autograder.o common.o
-	$(CC) -o $@ $(LIBS) autograder.o common.o
-pthreads: pthreads.o common.o
-	$(CC) -o $@ $(LIBS) -lpthread pthreads.o common.o
-openmp: openmp.o common.o
-	$(CC) -o $@ $(LIBS) $(OPENMP) openmp.o common.o
-mpi: mpi.o common.o
-	$(MPCC) -o $@ $(LIBS) $(MPILIBS) mpi.o common.o
+gpu: gpu.o common.o
+	$(CC) -o $@ $(NVCCLIBS) gpu.o common.o
 
-autograder.o: autograder.cpp common.h
-	$(CC) -c $(CFLAGS) autograder.cpp
-openmp.o: openmp.cpp common.h
-	$(CC) -c $(OPENMP) $(CFLAGS) openmp.cpp
-serial.o: serial.cpp common.h
-	$(CC) -c $(CFLAGS) serial.cpp
-pthreads.o: pthreads.cpp common.h
-	$(CC) -c $(CFLAGS) pthreads.cpp
-mpi.o: mpi.cpp common.h
-	$(MPCC) -c $(CFLAGS) mpi.cpp
-common.o: common.cpp common.h
-	$(CC) -c $(CFLAGS) common.cpp
+serial.o: serial.cu common.h
+	$(CC) -c $(CFLAGS) serial.cu
+gpu.o: gpu.cu common.h
+	$(CC) -c $(NVCCFLAGS) gpu.cu
+common.o: common.cu common.h
+	$(CC) -c $(CFLAGS) common.cu
 
 clean:
-	rm -f *.o $(TARGETS) *.stdout *.txt
+	rm -f *.o $(TARGETS)

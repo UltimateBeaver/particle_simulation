@@ -13,11 +13,6 @@ double size;
 //
 //  tuned constants
 //
-#define density 0.0005
-#define mass    0.01
-#define cutoff  0.01
-#define min_r   (cutoff/100)
-#define dt      0.0005
 
 //
 //  timer
@@ -85,7 +80,7 @@ void init_particles( int n, particle_t *p )
 //
 //  interact two particles
 //
-void apply_force( particle_t &particle, particle_t &neighbor , double *dmin, double *davg, int *navg)
+void apply_force( particle_t &particle, particle_t &neighbor )
 {
 
     double dx = neighbor.x - particle.x;
@@ -93,19 +88,9 @@ void apply_force( particle_t &particle, particle_t &neighbor , double *dmin, dou
     double r2 = dx * dx + dy * dy;
     if( r2 > cutoff*cutoff )
         return;
-	if (r2 != 0)
-        {
-	   if (r2/(cutoff*cutoff) < *dmin * (*dmin))
-	      *dmin = sqrt(r2)/cutoff;
-           (*davg) += sqrt(r2)/cutoff;
-           (*navg) ++;
-        }
-		
     r2 = fmax( r2, min_r*min_r );
     double r = sqrt( r2 );
- 
-    
-	
+
     //
     //  very simple short-range repulsive force
     //
@@ -155,7 +140,7 @@ void save( FILE *f, int n, particle_t *p )
         first = false;
     }
     for( int i = 0; i < n; i++ )
-        fprintf( f, "%g %g\n", p[i].x, p[i].y );
+        fprintf( f, "%12.10f %12.10f\n", p[i].x, p[i].y );
 }
 
 //
