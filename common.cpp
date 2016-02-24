@@ -22,6 +22,13 @@ double size;
 //
 //  timer
 //
+/*
+The struct timeval is declared in sys/time.h and has the following members:
+    time_t tv_sec
+        This represents the number of whole seconds of elapsed time.
+    long int tv_usec
+        This is the rest of the elapsed time (a fraction of a second), represented as the number of microseconds. It is always less than one million.
+*/
 double read_timer( )
 {
     static bool initialized = false;

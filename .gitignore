@@ -1,0 +1,6 @@
+*.o
+*.pdf
+autograder
+openmp
+serial
+serial_linear
