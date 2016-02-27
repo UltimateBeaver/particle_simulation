@@ -5,6 +5,7 @@
 #include <cuda.h>
 #include <vector>
 #include "common.h"
+using std::vector;
 
 #define NUM_THREADS 256
 
@@ -21,9 +22,6 @@ int binNum(particle_t &p, int bpr)
 //
 int main( int argc, char **argv )
 {
-    int navg,nabsavg=0;
-    double dmin, davg, absmin= 1.0,absavg =0.0;
-
     if( find_option( argc, argv, "-h" ) >=0 )
     {
         printf( "Options:\n" );
@@ -59,10 +57,6 @@ int main( int argc, char **argv )
     double simulation_time = read_timer( );
     for( int step = 0; step < NSTEPS; step++ )
     {
-      navg = 0;
-      davg = 0.0;
-      dmin = 1.0;
-
       // clear bins at each time step
       for (int m = 0; m < numbins; m++)
         bins[m].clear();
@@ -96,7 +90,7 @@ int main( int argc, char **argv )
           {
             int nbin = cbin + i + bpr*j;
             for (int k = 0; k < bins[nbin].size(); k++ )
-              apply_force( particles[p], *bins[nbin][k], &dmin, &davg, &navg);
+              apply_force( particles[p], *bins[nbin][k]);
           }
       }
 
@@ -106,6 +100,12 @@ int main( int argc, char **argv )
       for( int p = 0; p < n; p++ )
         move( particles[p] );
 
+      //
+      //  save if necessary
+      //
+      if( fsave && (step%SAVEFREQ) == 0 ) {
+        save( fsave, n, particles);
+      }	
     }
     simulation_time = read_timer( ) - simulation_time;
 
