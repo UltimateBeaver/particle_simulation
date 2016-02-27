@@ -138,8 +138,7 @@ int main( int argc, char **argv )
     init_particles( n, particles );
 
     // create spatial bins (of size cutoff by cutoff)
-    double size = sqrt( density*n );
-    int bpr = ceil(size/cutoff);
+    int bpr = ceil(sqrt( density*n )/cutoff);
     int numbins = bpr*bpr;
     // the maximum possible numbers of particles inside a bin
     int maxnum_per_bin = (cutoff*2/min_r) * (cutoff*2/min_r);
