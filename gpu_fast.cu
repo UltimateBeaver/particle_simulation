@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <math.h>
 #include <cuda.h>
+#include <vector>
 #include "common.h"
 
 #define NUM_THREADS 256
