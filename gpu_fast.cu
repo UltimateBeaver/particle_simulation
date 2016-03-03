@@ -280,7 +280,7 @@ int main( int argc, char **argv )
           }
           if (check_error) {
             int dummy;
-            scanf("%d", %dummy);
+            scanf("%d", &dummy);
           }
         }
       }
