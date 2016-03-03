@@ -54,7 +54,6 @@ int main( int argc, char **argv )
     init_particles( n, particles );
 
     // create spatial bins (of size cutoff by cutoff)
-    double size = sqrt( density*n );
     int bpr = ceil(size/cutoff);
     int numbins = bpr*bpr;
     vector<particle_t*> *bins = new vector<particle_t*>[numbins];
@@ -143,7 +142,7 @@ int main( int argc, char **argv )
                 }
 
                 #pragma omp critical
-                if (dmin < absmin) 
+                if (dmin < absmin)
                     absmin = dmin;
 
                 //
@@ -173,7 +172,7 @@ int main( int argc, char **argv )
         if (absmin < 0.4) printf ("\nThe minimum distance is below 0.4 meaning that some particle is not interacting");
         if (absavg < 0.8) printf ("\nThe average distance is below 0.8 meaning that most particles are not interacting");
     }
-    
+
     printf("\n");
 
     //
