@@ -240,7 +240,7 @@ int main( int argc, char **argv )
             {
               int nbin = cbin + i + bpr*j;
               for (int k = 0; k < bins[nbin].size(); k++ )
-                apply_force( check_particles[p], *bins[nbin][k], &dmin, &davg, &navg);
+                apply_force( check_particles[p], *bins[nbin][k]);
             }
           }
         }
