@@ -156,14 +156,16 @@ int main( int argc, char **argv )
     int numbins = bpr*bpr;
     // the maximum possible numbers of particles inside a bin
     int maxnum_per_bin = n;
+    print("bin per row: %d, bin num: %d\n", bpr, numbins);
 
     // Bins for particles
     // bins will be a (bpr, bpr, maxnum_per_bin) array
     int * bin_count;
     particle_t ** bin_content;
-    cudaMalloc((void **) &bin_count, numbins * sizeof(int));
+    // Memory allocation
+    cudaSuccess == cudaMalloc((void **) &bin_count, numbins * sizeof(int));
     cudaMalloc((void **) &bin_content, numbins * maxnum_per_bin * sizeof(particle_t*));
-    printf("size: %lu\n", numbins * maxnum_per_bin * sizeof(particle_t*));
+    printf("GPU memory allocation size: %lu\n", numbins * maxnum_per_bin * sizeof(particle_t*));
 
     // CPU check buffer
     vector<particle_t*> *bins = 0;
