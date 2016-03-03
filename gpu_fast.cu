@@ -142,6 +142,7 @@ int main( int argc, char **argv )
     int numbins = bpr*bpr;
     // the maximum possible numbers of particles inside a bin
     int maxnum_per_bin = (cutoff*2/min_r) * (cutoff*2/min_r);
+    maxnum_per_bin = 200;
 
     // Bins for particles
     // bins will be a (bpr, bpr, maxnum_per_bin) array
@@ -149,6 +150,7 @@ int main( int argc, char **argv )
     particle_t ** bin_content;
     cudaMalloc((void **) &bin_count, numbins * sizeof(int));
     cudaMalloc((void **) &bin_content, numbins * maxnum_per_bin * sizeof(particle_t*));
+    printf("size: %lu\n", numbins * maxnum_per_bin * sizeof(particle_t*));
 
     cudaDeviceSynchronize();
     double copy_time = read_timer( );
