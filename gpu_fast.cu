@@ -11,16 +11,16 @@ using std::vector;
 
 extern double size;
 
-// calculate particle's bin number
-int binNum(particle_t &p, int bpr)
-{
-    return ( floor(p.x/cutoff) + bpr*floor(p.y/cutoff) );
-}
-
-inline bool double_near(double x, double y) {
-  const double eps = 1e-5;
-  return (x - y < eps) && (y - x < eps);
-}
+// // calculate particle's bin number
+// int binNum(particle_t &p, int bpr)
+// {
+//     return ( floor(p.x/cutoff) + bpr*floor(p.y/cutoff) );
+// }
+//
+// inline bool double_near(double x, double y) {
+//   const double eps = 1e-5;
+//   return (x - y < eps) && (y - x < eps);
+// }
 
 #define CUDA_KERNEL_LOOP(i, n) \
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; \
@@ -51,8 +51,7 @@ __global__ void assign_particle_to_bin(int n, particle_t* d_particles,
   }
 }
 
-__device__ void apply_force_gpu(particle_t &particle, particle_t &neighbor)
-{
+__device__ void apply_force_gpu(particle_t &particle, particle_t &neighbor) {
   // This function won't apply force to itself, so particle and neighbor can be
   // the same particle and ax and ay will not change.
   double dx = neighbor.x - particle.x;
@@ -108,8 +107,7 @@ __global__ void compute_forces_gpu(int n, particle_t* d_particles,
   }
 }
 
-__global__ void move_gpu (particle_t * d_particles, int n, double size)
-{
+__global__ void move_gpu (particle_t * d_particles, int n, double size) {
   CUDA_KERNEL_LOOP(i, n) {
     particle_t * p = &d_particles[i];
     //
@@ -152,7 +150,6 @@ int main( int argc, char **argv )
         printf( "-o <filename> to specify the output file name\n" );
         return 0;
     }
-    bool cpu_check = find_option( argc, argv, "-check" ) >=0;
 
     int n = read_int( argc, argv, "-n", 1000 );
 
@@ -198,16 +195,17 @@ int main( int argc, char **argv )
     size_t total_memsize = bin_count_memsize + bin_content_memsize;
     printf("GPU allocation Bytes: %lu (= %f MB)\n", total_memsize, total_memsize / 1048576.0);
 
-    // CPU check buffer
-    vector<particle_t*> *bins = 0;
-    particle_t *check_particles = 0;
-    bool check_error = false;
-    if (cpu_check) {
-      printf("turning on CPU check\n");
-      bins = new vector<particle_t*>[numbins];
-      check_particles = (particle_t*) malloc( n * sizeof(particle_t) );
-      memcpy(check_particles, particles, n * sizeof(particle_t));
-    }
+    // // CPU check buffer
+    // bool cpu_check = find_option( argc, argv, "-check" ) >=0;
+    // vector<particle_t*> *bins = 0;
+    // particle_t *check_particles = 0;
+    // bool check_error = false;
+    // if (cpu_check) {
+    //   printf("turning on CPU check\n");
+    //   bins = new vector<particle_t*>[numbins];
+    //   check_particles = (particle_t*) malloc( n * sizeof(particle_t) );
+    //   memcpy(check_particles, particles, n * sizeof(particle_t));
+    // }
 
     cudaDeviceSynchronize();
     double copy_time = read_timer( );
@@ -243,124 +241,124 @@ int main( int argc, char **argv )
       compute_forces_gpu<<<blks, NUM_THREADS>>>(n, d_particles, bpr,
           maxnum_per_bin, bin_count, bin_content);
 
-      if (cpu_check) {
-        // clear bins at each time step
-        for (int m = 0; m < numbins; m++)
-          bins[m].clear();
-
-        // place particles in bins
-        for (int i = 0; i < n; i++)
-          bins[binNum(check_particles[i],bpr)].push_back(check_particles + i);
-
-        //
-        //  compute forces
-        //
-        for( int p = 0; p < n; p++ )
-        {
-          check_particles[p].ax = check_particles[p].ay = 0;
-
-          // find current particle's bin, handle boundaries
-          int cbin = binNum( check_particles[p], bpr );
-          int lowi = -1, highi = 1, lowj = -1, highj = 1;
-          if (cbin < bpr)
-            lowj = 0;
-          if (cbin % bpr == 0)
-            lowi = 0;
-          if (cbin % bpr == (bpr-1))
-            highi = 0;
-          if (cbin >= bpr*(bpr-1))
-            highj = 0;
-
-          // apply nearby forces
-          for (int i = lowi; i <= highi; i++) {
-            for (int j = lowj; j <= highj; j++)
-            {
-              int nbin = cbin + i + bpr*j;
-              for (int k = 0; k < bins[nbin].size(); k++ )
-                apply_force( check_particles[p], *bins[nbin][k]);
-            }
-          }
-        }
-
-        // Copy the particles back to the CPU
-        cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
-        for( int p = 0; p < n; p++ ) {
-          particle_t& a = particles[p];
-          particle_t& b = check_particles[p];
-          if (!double_near(a.x, b.x)) {
-            check_error = true;
-            printf("\tx failed: %f (compute) vs. %f (ref)\n", a.x, b.x);
-          }
-          if (!double_near(a.y, b.y)) {
-            check_error = true;
-            printf("\ty failed: %f (compute) vs. %f (ref)\n", a.y, b.y);
-          }
-          if (!double_near(a.vx, b.vx)) {
-            check_error = true;
-            printf("\tvx failed: %f (compute) vs. %f (ref)\n", a.vx, b.vx);
-          }
-          if (!double_near(a.vy, b.vy)) {
-            check_error = true;
-            printf("\tvy failed: %f (compute) vs. %f (ref)\n", a.vy, b.vy);
-          }
-          if (!double_near(a.ax, b.ax)) {
-            check_error = true;
-            printf("\tax failed: %f (compute) vs. %f (ref)\n", a.ax, b.ax);
-          }
-          if (!double_near(a.ay, b.ay)) {
-            check_error = true;
-            printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
-          }
-          if (check_error) {
-            printf("ERROR: particle %d at step %d before moving\n", p, step);
-            int dummy; scanf("%d", &dummy);
-          }
-        }
-      }
+      // if (cpu_check) {
+      //   // clear bins at each time step
+      //   for (int m = 0; m < numbins; m++)
+      //     bins[m].clear();
+      //
+      //   // place particles in bins
+      //   for (int i = 0; i < n; i++)
+      //     bins[binNum(check_particles[i],bpr)].push_back(check_particles + i);
+      //
+      //   //
+      //   //  compute forces
+      //   //
+      //   for( int p = 0; p < n; p++ )
+      //   {
+      //     check_particles[p].ax = check_particles[p].ay = 0;
+      //
+      //     // find current particle's bin, handle boundaries
+      //     int cbin = binNum( check_particles[p], bpr );
+      //     int lowi = -1, highi = 1, lowj = -1, highj = 1;
+      //     if (cbin < bpr)
+      //       lowj = 0;
+      //     if (cbin % bpr == 0)
+      //       lowi = 0;
+      //     if (cbin % bpr == (bpr-1))
+      //       highi = 0;
+      //     if (cbin >= bpr*(bpr-1))
+      //       highj = 0;
+      //
+      //     // apply nearby forces
+      //     for (int i = lowi; i <= highi; i++) {
+      //       for (int j = lowj; j <= highj; j++)
+      //       {
+      //         int nbin = cbin + i + bpr*j;
+      //         for (int k = 0; k < bins[nbin].size(); k++ )
+      //           apply_force( check_particles[p], *bins[nbin][k]);
+      //       }
+      //     }
+      //   }
+      //
+      //   // Copy the particles back to the CPU
+      //   cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
+      //   for( int p = 0; p < n; p++ ) {
+      //     particle_t& a = particles[p];
+      //     particle_t& b = check_particles[p];
+      //     if (!double_near(a.x, b.x)) {
+      //       check_error = true;
+      //       printf("\tx failed: %f (compute) vs. %f (ref)\n", a.x, b.x);
+      //     }
+      //     if (!double_near(a.y, b.y)) {
+      //       check_error = true;
+      //       printf("\ty failed: %f (compute) vs. %f (ref)\n", a.y, b.y);
+      //     }
+      //     if (!double_near(a.vx, b.vx)) {
+      //       check_error = true;
+      //       printf("\tvx failed: %f (compute) vs. %f (ref)\n", a.vx, b.vx);
+      //     }
+      //     if (!double_near(a.vy, b.vy)) {
+      //       check_error = true;
+      //       printf("\tvy failed: %f (compute) vs. %f (ref)\n", a.vy, b.vy);
+      //     }
+      //     if (!double_near(a.ax, b.ax)) {
+      //       check_error = true;
+      //       printf("\tax failed: %f (compute) vs. %f (ref)\n", a.ax, b.ax);
+      //     }
+      //     if (!double_near(a.ay, b.ay)) {
+      //       check_error = true;
+      //       printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
+      //     }
+      //     if (check_error) {
+      //       printf("ERROR: particle %d at step %d before moving\n", p, step);
+      //       int dummy; scanf("%d", &dummy);
+      //     }
+      //   }
+      // }
 
       //
       //  move particles
       //
       move_gpu <<< blks, NUM_THREADS >>> (d_particles, n, size);
 
-      if (cpu_check) {
-        for( int p = 0; p < n; p++ )
-          move( check_particles[p] );
-        // Copy the particles back to the CPU
-        cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
-        for( int p = 0; p < n; p++ ) {
-          particle_t& a = particles[p];
-          particle_t& b = check_particles[p];
-          if (!double_near(a.x, b.x)) {
-            check_error = true;
-            printf("\tx failed: %f (compute) vs. %f (ref)\n", a.x, b.x);
-          }
-          if (!double_near(a.y, b.y)) {
-            check_error = true;
-            printf("\ty failed: %f (compute) vs. %f (ref)\n", a.y, b.y);
-          }
-          if (!double_near(a.vx, b.vx)) {
-            check_error = true;
-            printf("\tvx failed: %f (compute) vs. %f (ref)\n", a.vx, b.vx);
-          }
-          if (!double_near(a.vy, b.vy)) {
-            check_error = true;
-            printf("\tvy failed: %f (compute) vs. %f (ref)\n", a.vy, b.vy);
-          }
-          if (!double_near(a.ax, b.ax)) {
-            check_error = true;
-            printf("\tax failed: %f (compute) vs. %f (ref)\n", a.ax, b.ax);
-          }
-          if (!double_near(a.ay, b.ay)) {
-            check_error = true;
-            printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
-          }
-          if (check_error) {
-            printf("ERROR: particle %d at step %d after moving\n", p, step);
-            int dummy; scanf("%d", &dummy);
-          }
-        }
-      }
+      // if (cpu_check) {
+      //   for( int p = 0; p < n; p++ )
+      //     move( check_particles[p] );
+      //   // Copy the particles back to the CPU
+      //   cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
+      //   for( int p = 0; p < n; p++ ) {
+      //     particle_t& a = particles[p];
+      //     particle_t& b = check_particles[p];
+      //     if (!double_near(a.x, b.x)) {
+      //       check_error = true;
+      //       printf("\tx failed: %f (compute) vs. %f (ref)\n", a.x, b.x);
+      //     }
+      //     if (!double_near(a.y, b.y)) {
+      //       check_error = true;
+      //       printf("\ty failed: %f (compute) vs. %f (ref)\n", a.y, b.y);
+      //     }
+      //     if (!double_near(a.vx, b.vx)) {
+      //       check_error = true;
+      //       printf("\tvx failed: %f (compute) vs. %f (ref)\n", a.vx, b.vx);
+      //     }
+      //     if (!double_near(a.vy, b.vy)) {
+      //       check_error = true;
+      //       printf("\tvy failed: %f (compute) vs. %f (ref)\n", a.vy, b.vy);
+      //     }
+      //     if (!double_near(a.ax, b.ax)) {
+      //       check_error = true;
+      //       printf("\tax failed: %f (compute) vs. %f (ref)\n", a.ax, b.ax);
+      //     }
+      //     if (!double_near(a.ay, b.ay)) {
+      //       check_error = true;
+      //       printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
+      //     }
+      //     if (check_error) {
+      //       printf("ERROR: particle %d at step %d after moving\n", p, step);
+      //       int dummy; scanf("%d", &dummy);
+      //     }
+      //   }
+      // }
 
       //
       //  save if necessary
@@ -383,9 +381,9 @@ int main( int argc, char **argv )
     cudaFree(bin_content);
     if( fsave )
         fclose( fsave );
-    if (cpu_check) {
-      delete[] bins;
-      free(check_particles);
-    }
+    // if (cpu_check) {
+    //   delete[] bins;
+    //   free(check_particles);
+    // }
     return 0;
 }
