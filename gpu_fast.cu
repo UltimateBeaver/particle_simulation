@@ -30,13 +30,23 @@ inline bool double_near(double x, double y) {
 __global__ void assign_particle_to_bin(int n, particle_t* d_particles,
     int bpr, int maxnum_per_bin, int* bin_count, particle_t** bin_content) {
   CUDA_KERNEL_LOOP (i, n) {
-    particle_t* p = d_particles + i;
+    particle_t* p = &d_particles[i];
     int bin_idx = floor(p->x/cutoff) + bpr*floor(p->y/cutoff);
 
     // Put particle in bin_idx
     // Compute the position of particle inside the bin with AtomicAdd
     // to avoid race.
-    int list_idx = atomicAdd(&bin_count[bin_idx], 1);
+    int list_idx = atomicAdd(&bin_count[bin_idx], 1);  // index within bin
+
+    // Check if this bin is full
+    if (list_idx >= maxnum_per_bin) {  // bin full (very unlikely but possible)
+      atomicAdd(&bin_count[bin_idx], -1);  // reverse the effect of previous atomicAdd
+
+      // "outsider collector" is at the end and can contain enough particles
+      bin_idx = bpr*bpr;
+      // index in "outsider collector"
+      list_idx = atomicAdd(&bin_count[bin_idx], 1);
+    }
     bin_content[bin_idx*maxnum_per_bin + list_idx] = p;
   }
 }
@@ -90,6 +100,11 @@ __global__ void compute_forces_gpu(int n, particle_t* d_particles,
         for (int k = 0; k < bin_count[nbin]; k++ )
           apply_force_gpu(*p, *bin_content[nbin*maxnum_per_bin+k]);
       }
+
+    // collect force from particles in "outsider collector"
+    int nbin = bpr * bpr;
+    for (int k = 0; k < bin_count[nbin]; k++ )
+      apply_force_gpu(*p, *bin_content[nbin*maxnum_per_bin+k]);
   }
 }
 
@@ -162,7 +177,6 @@ int main( int argc, char **argv )
     int bpr = ceil(sqrt( density*n )/cutoff);
     int numbins = bpr*bpr;
 
-
     printf("bin per row: %d, bin num: %d\n", bpr, numbins);
 
     // Bins for particles
@@ -170,12 +184,12 @@ int main( int argc, char **argv )
     int * bin_count;
     particle_t ** bin_content;
     // Memory allocation
-    size_t bin_count_memsize = numbins * sizeof(int);
+    size_t bin_count_memsize = (numbins + 1) * sizeof(int);
     if (cudaSuccess != cudaMalloc((void **) &bin_count, bin_count_memsize)) {
       printf("ERROR: failed to allocate GPU array bin_count of size %lu\n", bin_count_memsize);
       return -1;
     }
-    size_t bin_content_memsize = numbins * sizeof(particle_t*) * maxnum_per_bin;
+    size_t bin_content_memsize = (numbins*maxnum_per_bin + 1) * sizeof(particle_t*);
     if (cudaSuccess != cudaMalloc((void **) &bin_content, bin_content_memsize)) {
       printf("ERROR: failed to allocate GPU array bin_content of size %lu\n", bin_content_memsize);
       return -1;
@@ -213,7 +227,8 @@ int main( int argc, char **argv )
     {
       // clear bins at each time step
       // Mark all bins as "no particle"
-      cudaMemset(bin_count, 0, numbins*sizeof(int));
+      // Also clear the "outsider collector" (extra bin)
+      cudaMemset(bin_count, 0, (numbins + 1) * sizeof(int));
 
 
       // place particles in bins
