@@ -168,6 +168,7 @@ int main( int argc, char **argv )
     vector<particle_t*> *bins = 0;
     particle_t *check_particles = 0;
     if (cpu_check) {
+      printf("turning on CPU check\n");
       bins = new vector<particle_t*>[numbins];
       particle_t *check_particles = (particle_t*) malloc( n * sizeof(particle_t) );
       memcpy(check_particles, particles, n * sizeof(particle_t));
