@@ -11,6 +11,17 @@ using std::vector;
 
 extern double size;
 
+// calculate particle's bin number
+int binNum(particle_t &p, int bpr)
+{
+    return ( floor(p.x/cutoff) + bpr*floor(p.y/cutoff) );
+}
+
+inline bool double_near(double x, double y) {
+  const double eps = 1e-5;
+  return (x - y < eps) && (y - x < eps);
+}
+
 #define CUDA_KERNEL_LOOP(i, n) \
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; \
       i < (n); \
@@ -121,6 +132,7 @@ int main( int argc, char **argv )
         printf( "-o <filename> to specify the output file name\n" );
         return 0;
     }
+    bool cpu_check = find_option( argc, argv, "-c" ) >=0;
 
     int n = read_int( argc, argv, "-n", 1000 );
 
@@ -128,7 +140,7 @@ int main( int argc, char **argv )
 
     FILE *fsave = savename ? fopen( savename, "w" ) : NULL;
     particle_t *particles = (particle_t*) malloc( n * sizeof(particle_t) );
-    
+
     // GPU particle data structure
     particle_t * d_particles;
     cudaMalloc((void **) &d_particles, n * sizeof(particle_t));
@@ -152,6 +164,15 @@ int main( int argc, char **argv )
     cudaMalloc((void **) &bin_content, numbins * maxnum_per_bin * sizeof(particle_t*));
     printf("size: %lu\n", numbins * maxnum_per_bin * sizeof(particle_t*));
 
+    // CPU check buffer
+    vector<particle_t*> *bins = 0;
+    particle_t *check_particles = 0;
+    if (cpu_check) {
+      bins = new vector<particle_t*>[numbins];
+      particle_t *check_particles = (particle_t*) malloc( n * sizeof(particle_t) );
+      memcpy(check_particles, particles, n * sizeof(particle_t));
+    }
+
     cudaDeviceSynchronize();
     double copy_time = read_timer( );
 
@@ -173,16 +194,79 @@ int main( int argc, char **argv )
       // Mark all bins as "no particle"
       cudaMemset(bin_count, 0, numbins*sizeof(int));
 
+
       // place particles in bins
       int blks = (n + NUM_THREADS - 1) / NUM_THREADS;
       assign_particle_to_bin<<<blks, NUM_THREADS>>>(n, d_particles, bpr,
           maxnum_per_bin, bin_count, bin_content);
-      
+
       //
       //  compute forces
       //
       compute_forces_gpu<<<blks, NUM_THREADS>>>(n, d_particles, bpr,
           maxnum_per_bin, bin_count, bin_content);
+
+      if (cpu_check) {
+        // clear bins at each time step
+        for (int m = 0; m < numbins; m++)
+          bins[m].clear();
+
+        // place particles in bins
+        for (int i = 0; i < n; i++)
+          bins[binNum(check_particles[i],bpr)].push_back(check_particles + i);
+
+        //
+        //  compute forces
+        //
+        for( int p = 0; p < n; p++ )
+        {
+          check_particles[p].ax = check_particles[p].ay = 0;
+
+          // find current particle's bin, handle boundaries
+          int cbin = binNum( check_particles[p], bpr );
+          int lowi = -1, highi = 1, lowj = -1, highj = 1;
+          if (cbin < bpr)
+            lowj = 0;
+          if (cbin % bpr == 0)
+            lowi = 0;
+          if (cbin % bpr == (bpr-1))
+            highi = 0;
+          if (cbin >= bpr*(bpr-1))
+            highj = 0;
+
+          // apply nearby forces
+          for (int i = lowi; i <= highi; i++) {
+            for (int j = lowj; j <= highj; j++)
+            {
+              int nbin = cbin + i + bpr*j;
+              for (int k = 0; k < bins[nbin].size(); k++ )
+                apply_force( check_particles[p], *bins[nbin][k], &dmin, &davg, &navg);
+            }
+          }
+        }
+
+        // Copy the particles back to the CPU
+        cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
+
+        for( int p = 0; p < n; p++ ) {
+          printf('checking particle %d\n', p);
+          particle_t& a = particles[p];
+          particle_t& b = check_particles[p];
+          if (!double_near(a.x, b.x))
+            printf('\tx failed: %f (compute) vs. %f (ref)\n', a.x, b.x);
+          if (!double_near(a.y, b.y))
+            printf('\ty failed: %f (compute) vs. %f (ref)\n', a.y, b.y);
+          if (!double_near(a.vx, b.vx))
+            printf('\tvx failed: %f (compute) vs. %f (ref)\n', a.vx, b.vx);
+          if (!double_near(a.vy, b.vy))
+            printf('\tvy failed: %f (compute) vs. %f (ref)\n', a.vy, b.vy);
+          if (!double_near(a.ax, b.ax))
+            printf('\tax failed: %f (compute) vs. %f (ref)\n', a.ax, b.ax);
+          if (!double_near(a.ay, b.ay))
+            printf('\tay failed: %f (compute) vs. %f (ref)\n', a.ay, b.ay);
+          abort();
+        }
+      }
 
       //
       //  move particles
@@ -193,9 +277,9 @@ int main( int argc, char **argv )
       //  save if necessary
       //
       if( fsave && (step%SAVEFREQ) == 0 ) {
-	    // Copy the particles back to the CPU
-            cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
-            save( fsave, n, particles);
+        // Copy the particles back to the CPU
+        cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
+        save( fsave, n, particles);
       }
     }
     cudaDeviceSynchronize();
