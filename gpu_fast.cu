@@ -164,11 +164,15 @@ int main( int argc, char **argv )
     particle_t ** bin_content;
     // Memory allocation
     size_t bin_count_memsize = numbins * sizeof(int);
-    if (cudaSuccess != cudaMalloc((void **) &bin_count, bin_count_memsize))
-      printf("failed to allocate GPU array bin_count\n");
+    if (cudaSuccess != cudaMalloc((void **) &bin_count, bin_count_memsize)) {
+      printf("ERROR: failed to allocate GPU array bin_count of size %lu\n", bin_count_memsize);
+      return -1;
+    }
     size_t bin_content_memsize = numbins * sizeof(particle_t*) * maxnum_per_bin;
-    if (cudaSuccess != cudaMalloc((void **) &bin_content, bin_content_memsize))
-      printf("failed to allocate GPU array bin_content\n");
+    if (cudaSuccess != cudaMalloc((void **) &bin_content, bin_content_memsize)) {
+      printf("ERROR: failed to allocate GPU array bin_content of size %lu\n", bin_content_memsize);
+      return -1;
+    }
 
     printf("GPU allocation bytes: %lu\n", bin_count_memsize + bin_content_memsize);
 
@@ -285,7 +289,7 @@ int main( int argc, char **argv )
             printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
           }
           if (check_error) {
-            printf("FAILED: particle %d at step %d before moving\n", p, step);
+            printf("ERROR: particle %d at step %d before moving\n", p, step);
             int dummy; scanf("%d", &dummy);
           }
         }
@@ -329,7 +333,7 @@ int main( int argc, char **argv )
             printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
           }
           if (check_error) {
-            printf("FAILED: particle %d at step %d after moving\n", p, step);
+            printf("ERROR: particle %d at step %d after moving\n", p, step);
             int dummy; scanf("%d", &dummy);
           }
         }
