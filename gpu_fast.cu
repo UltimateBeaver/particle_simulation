@@ -65,6 +65,8 @@ __global__ void compute_forces_gpu(int n, particle_t* d_particles,
     int bpr, int maxnum_per_bin, int* bin_count, particle_t** bin_content) {
   CUDA_KERNEL_LOOP (i, n) {
     particle_t* p = &d_particles[i];
+    p->ax = p->ay = 0;
+
     int bin_idx = floor(p->x/cutoff) + bpr*floor(p->y/cutoff);
 
     int lowi = -1, highi = 1, lowj = -1, highj = 1;
@@ -334,8 +336,8 @@ int main( int argc, char **argv )
       if( fsave && (step%SAVEFREQ) == 0 ) {
         // Copy the particles back to the CPU
         cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
-        // save( fsave, n, particles);
-        save( fsave, n, check_particles);
+        save( fsave, n, particles);
+        // save( fsave, n, check_particles);
 
       }
     }
