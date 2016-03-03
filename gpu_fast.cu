@@ -334,7 +334,9 @@ int main( int argc, char **argv )
       if( fsave && (step%SAVEFREQ) == 0 ) {
         // Copy the particles back to the CPU
         cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
-        save( fsave, n, particles);
+        // save( fsave, n, particles);
+        save( fsave, n, check_particles);
+
       }
     }
     cudaDeviceSynchronize();
