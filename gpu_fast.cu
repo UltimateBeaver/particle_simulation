@@ -249,9 +249,8 @@ int main( int argc, char **argv )
 
         // Copy the particles back to the CPU
         cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
-
         for( int p = 0; p < n; p++ ) {
-          printf("checking particle %d at step %d\n", p, step);
+          printf("checking particle %d at step %d before moving\n", p, step);
           particle_t& a = particles[p];
           particle_t& b = check_particles[p];
           if (!double_near(a.x, b.x)) {
@@ -279,8 +278,7 @@ int main( int argc, char **argv )
             printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
           }
           if (check_error) {
-            int dummy;
-            scanf("%d", &dummy);
+            system("read");
           }
         }
       }
@@ -289,6 +287,46 @@ int main( int argc, char **argv )
       //  move particles
       //
       move_gpu <<< blks, NUM_THREADS >>> (d_particles, n, size);
+
+      if (cpu_check) {
+        for( int p = 0; p < n; p++ )
+          move( particles[p] );
+
+        // Copy the particles back to the CPU
+        cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
+        for( int p = 0; p < n; p++ ) {
+          printf("checking particle %d at step %d after moving\n", p, step);
+          particle_t& a = particles[p];
+          particle_t& b = check_particles[p];
+          if (!double_near(a.x, b.x)) {
+            check_error = true;
+            printf("\tx failed: %f (compute) vs. %f (ref)\n", a.x, b.x);
+          }
+          if (!double_near(a.y, b.y)) {
+            check_error = true;
+            printf("\ty failed: %f (compute) vs. %f (ref)\n", a.y, b.y);
+          }
+          if (!double_near(a.vx, b.vx)) {
+            check_error = true;
+            printf("\tvx failed: %f (compute) vs. %f (ref)\n", a.vx, b.vx);
+          }
+          if (!double_near(a.vy, b.vy)) {
+            check_error = true;
+            printf("\tvy failed: %f (compute) vs. %f (ref)\n", a.vy, b.vy);
+          }
+          if (!double_near(a.ax, b.ax)) {
+            check_error = true;
+            printf("\tax failed: %f (compute) vs. %f (ref)\n", a.ax, b.ax);
+          }
+          if (!double_near(a.ay, b.ay)) {
+            check_error = true;
+            printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
+          }
+          if (check_error) {
+            system("read");
+          }
+        }
+      }
 
       //
       //  save if necessary
