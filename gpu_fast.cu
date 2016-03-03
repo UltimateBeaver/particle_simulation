@@ -172,7 +172,7 @@ int main( int argc, char **argv )
     // create spatial bins (of size cutoff by cutoff)
     // the maximum possible numbers of particles inside a bin
     // Note: if there happen to be more particles in that bin, put it in "outsider collector"
-    const int maxnum_per_bin = 10;
+    const int maxnum_per_bin = 5;
     // create an extra bin as "outsider collector"
     int bpr = ceil(sqrt( density*n )/cutoff);
     int numbins = bpr*bpr;
@@ -195,7 +195,8 @@ int main( int argc, char **argv )
       return -1;
     }
 
-    printf("GPU allocation bytes: %lu\n", bin_count_memsize + bin_content_memsize);
+    size_t total_memsize = bin_count_memsize + bin_content_memsize;
+    printf("GPU allocation Bytes: %lu (= %f MB)\n", total_memsize, total_memsize / 1048576.0);
 
     // CPU check buffer
     vector<particle_t*> *bins = 0;

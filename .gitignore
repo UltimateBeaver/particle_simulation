@@ -1,3 +1,4 @@
-gpu.txt
+*.txt
+gpu
 gpu_fast
 *.o
