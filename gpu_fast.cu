@@ -278,7 +278,7 @@ int main( int argc, char **argv )
             printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
           }
           if (check_error) {
-            system("read");
+            int dummy; scanf("%d", &dummy);
           }
         }
       }
@@ -323,7 +323,7 @@ int main( int argc, char **argv )
             printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
           }
           if (check_error) {
-            system("read");
+            int dummy; scanf("%d", &dummy);
           }
         }
       }
