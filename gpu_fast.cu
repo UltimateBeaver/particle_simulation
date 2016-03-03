@@ -163,9 +163,14 @@ int main( int argc, char **argv )
     int * bin_count;
     particle_t ** bin_content;
     // Memory allocation
-    cudaSuccess == cudaMalloc((void **) &bin_count, numbins * sizeof(int));
-    cudaMalloc((void **) &bin_content, numbins * maxnum_per_bin * sizeof(particle_t*));
-    printf("GPU memory allocation size: %lu\n", numbins * maxnum_per_bin * sizeof(particle_t*));
+    size_t bin_count_memsize = numbins * sizeof(int);
+    if (cudaSuccess != cudaMalloc((void **) &bin_count, bin_count_memsize))
+      printf("failed to allocate GPU array bin_count\n");
+    size_t bin_content_memsize = numbins * sizeof(particle_t*) * maxnum_per_bin;
+    if (cudaSuccess != cudaMalloc((void **) &bin_content, bin_content_memsize))
+      printf("failed to allocate GPU array bin_content\n");
+
+    printf("GPU allocation bytes: %lu\n", bin_count_memsize + bin_content_memsize);
 
     // CPU check buffer
     vector<particle_t*> *bins = 0;
