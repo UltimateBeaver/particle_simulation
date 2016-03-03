@@ -134,7 +134,7 @@ int main( int argc, char **argv )
         printf( "-o <filename> to specify the output file name\n" );
         return 0;
     }
-    bool cpu_check = find_option( argc, argv, "-c" ) >=0;
+    bool cpu_check = find_option( argc, argv, "-check" ) >=0;
 
     int n = read_int( argc, argv, "-n", 1000 );
 
@@ -155,8 +155,7 @@ int main( int argc, char **argv )
     int bpr = ceil(sqrt( density*n )/cutoff);
     int numbins = bpr*bpr;
     // the maximum possible numbers of particles inside a bin
-    int maxnum_per_bin = (cutoff*2/min_r) * (cutoff*2/min_r);
-    maxnum_per_bin = 200;
+    int maxnum_per_bin = n;
 
     // Bins for particles
     // bins will be a (bpr, bpr, maxnum_per_bin) array
@@ -252,7 +251,6 @@ int main( int argc, char **argv )
         // Copy the particles back to the CPU
         cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
         for( int p = 0; p < n; p++ ) {
-          printf("checking particle %d at step %d before moving\n", p, step);
           particle_t& a = particles[p];
           particle_t& b = check_particles[p];
           if (!double_near(a.x, b.x)) {
@@ -280,6 +278,7 @@ int main( int argc, char **argv )
             printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
           }
           if (check_error) {
+            printf("FAILED: particle %d at step %d before moving\n", p, step);
             int dummy; scanf("%d", &dummy);
           }
         }
@@ -293,11 +292,9 @@ int main( int argc, char **argv )
       if (cpu_check) {
         for( int p = 0; p < n; p++ )
           move( check_particles[p] );
-
         // Copy the particles back to the CPU
         cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
         for( int p = 0; p < n; p++ ) {
-          printf("checking particle %d at step %d after moving\n", p, step);
           particle_t& a = particles[p];
           particle_t& b = check_particles[p];
           if (!double_near(a.x, b.x)) {
@@ -325,6 +322,7 @@ int main( int argc, char **argv )
             printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
           }
           if (check_error) {
+            printf("FAILED: particle %d at step %d after moving\n", p, step);
             int dummy; scanf("%d", &dummy);
           }
         }
@@ -351,6 +349,9 @@ int main( int argc, char **argv )
     cudaFree(bin_content);
     if( fsave )
         fclose( fsave );
-
+    if (cpu_check) {
+      delete[] bins;
+      free(check_particles);
+    }
     return 0;
 }
