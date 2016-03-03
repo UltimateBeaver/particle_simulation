@@ -290,7 +290,7 @@ int main( int argc, char **argv )
 
       if (cpu_check) {
         for( int p = 0; p < n; p++ )
-          move( particles[p] );
+          move( check_particles[p] );
 
         // Copy the particles back to the CPU
         cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
