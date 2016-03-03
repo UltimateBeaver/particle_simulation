@@ -250,7 +250,7 @@ int main( int argc, char **argv )
         cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
 
         for( int p = 0; p < n; p++ ) {
-          printf("checking particle %d\n", p);
+          printf("checking particle %d at step %d\n", p, step);
           particle_t& a = particles[p];
           particle_t& b = check_particles[p];
           if (!double_near(a.x, b.x))
