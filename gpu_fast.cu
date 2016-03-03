@@ -249,21 +249,21 @@ int main( int argc, char **argv )
         cudaMemcpy(particles, d_particles, n * sizeof(particle_t), cudaMemcpyDeviceToHost);
 
         for( int p = 0; p < n; p++ ) {
-          printf('checking particle %d\n', p);
+          printf("checking particle %d\n", p);
           particle_t& a = particles[p];
           particle_t& b = check_particles[p];
           if (!double_near(a.x, b.x))
-            printf('\tx failed: %f (compute) vs. %f (ref)\n', a.x, b.x);
+            printf("\tx failed: %f (compute) vs. %f (ref)\n", a.x, b.x);
           if (!double_near(a.y, b.y))
-            printf('\ty failed: %f (compute) vs. %f (ref)\n', a.y, b.y);
+            printf("\ty failed: %f (compute) vs. %f (ref)\n", a.y, b.y);
           if (!double_near(a.vx, b.vx))
-            printf('\tvx failed: %f (compute) vs. %f (ref)\n', a.vx, b.vx);
+            printf("\tvx failed: %f (compute) vs. %f (ref)\n", a.vx, b.vx);
           if (!double_near(a.vy, b.vy))
-            printf('\tvy failed: %f (compute) vs. %f (ref)\n', a.vy, b.vy);
+            printf("\tvy failed: %f (compute) vs. %f (ref)\n", a.vy, b.vy);
           if (!double_near(a.ax, b.ax))
-            printf('\tax failed: %f (compute) vs. %f (ref)\n', a.ax, b.ax);
+            printf("\tax failed: %f (compute) vs. %f (ref)\n", a.ax, b.ax);
           if (!double_near(a.ay, b.ay))
-            printf('\tay failed: %f (compute) vs. %f (ref)\n', a.ay, b.ay);
+            printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
           abort();
         }
       }
