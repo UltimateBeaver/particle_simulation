@@ -43,6 +43,8 @@ __global__ void assign_particle_to_bin(int n, particle_t* d_particles,
 
 __device__ void apply_force_gpu(particle_t &particle, particle_t &neighbor)
 {
+  // This function won't apply force to itself, so particle and neighbor can be
+  // the same particle and ax and ay will not change.
   double dx = neighbor.x - particle.x;
   double dy = neighbor.y - particle.y;
   double r2 = dx * dx + dy * dy;
@@ -80,6 +82,7 @@ __global__ void compute_forces_gpu(int n, particle_t* d_particles,
       highj = 0;
 
     // apply nearby forces
+    // Note: no need to skip itself in the bin
     for (int i = lowi; i <= highi; i++)
       for (int j = lowj; j <= highj; j++)
       {
@@ -152,10 +155,14 @@ int main( int argc, char **argv )
     init_particles( n, particles );
 
     // create spatial bins (of size cutoff by cutoff)
+    // the maximum possible numbers of particles inside a bin
+    // Note: if there happen to be more particles in that bin, put it in "outsider collector"
+    const int maxnum_per_bin = 10;
+    // create an extra bin as "outsider collector"
     int bpr = ceil(sqrt( density*n )/cutoff);
     int numbins = bpr*bpr;
-    // the maximum possible numbers of particles inside a bin
-    int maxnum_per_bin = n;
+
+
     printf("bin per row: %d, bin num: %d\n", bpr, numbins);
 
     // Bins for particles
