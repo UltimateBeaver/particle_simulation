@@ -171,7 +171,7 @@ int main( int argc, char **argv )
     // Note: if there happen to be more particles in that bin, put it in "outsider collector"
     const int maxnum_per_bin = 5;
     // create an extra bin as "outsider collector"
-    int bpr = ceil(sqrt( density*n )/cutoff);
+    int bpr = ceil(size/cutoff);
     int numbins = bpr*bpr;
 
     printf("bin per row: %d, bin num: %d\n", bpr, numbins);
