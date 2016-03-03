@@ -156,7 +156,7 @@ int main( int argc, char **argv )
     int numbins = bpr*bpr;
     // the maximum possible numbers of particles inside a bin
     int maxnum_per_bin = n;
-    print("bin per row: %d, bin num: %d\n", bpr, numbins);
+    printf("bin per row: %d, bin num: %d\n", bpr, numbins);
 
     // Bins for particles
     // bins will be a (bpr, bpr, maxnum_per_bin) array
