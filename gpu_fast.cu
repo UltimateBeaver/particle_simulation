@@ -279,7 +279,7 @@ int main( int argc, char **argv )
             printf("\tay failed: %f (compute) vs. %f (ref)\n", a.ay, b.ay);
           }
           if (check_error) {
-            system('read');  // pause
+            system("read");  // pause
           }
         }
       }
