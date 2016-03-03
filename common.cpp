@@ -111,8 +111,6 @@ void apply_force( particle_t &particle, particle_t &neighbor , double *dmin, dou
     r2 = fmax( r2, min_r*min_r );
     double r = sqrt( r2 );
  
-    
-	
     //
     //  very simple short-range repulsive force
     //

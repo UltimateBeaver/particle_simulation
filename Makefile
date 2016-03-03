@@ -9,7 +9,7 @@ OPENMP = -fopenmp #Note: this is the flag for Intel compilers. Change this to -f
 CFLAGS = -O3
 LIBS =
 
-TARGETS = serial openmp serial_linear autograder 
+TARGETS = serial serial_linear openmp openmp_linear autograder 
 
 all:	$(TARGETS)
 
@@ -23,6 +23,8 @@ autograder: autograder.o common.o
 #	$(CC) -o $@ $(LIBS) -lpthread pthreads.o common.o
 openmp: openmp.o common.o
 	$(CC) -o $@ $(LIBS) $(OPENMP) openmp.o common.o
+openmp_linear: openmp_linear.o common.o
+	$(CC) -o $@ $(LIBS) $(OPENMP) openmp_linear.o common.o
 #mpi: mpi.o common.o
 #	$(MPCC) -o $@ $(LIBS) $(MPILIBS) mpi.o common.o
 
@@ -30,6 +32,8 @@ autograder.o: autograder.cpp common.h
 	$(CC) -c $(CFLAGS) autograder.cpp
 openmp.o: openmp.cpp common.h
 	$(CC) -c $(OPENMP) $(CFLAGS) openmp.cpp
+openmp_linear.o: openmp_linear.cpp common.h
+	$(CC) -c $(OPENMP) $(CFLAGS) openmp_linear.cpp
 serial_linear.o: serial_linear.cpp common.h
 	$(CC) -c $(CFLAGS) serial_linear.cpp
 serial.o: serial.cpp common.h

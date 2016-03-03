@@ -2,5 +2,6 @@
 *.pdf
 autograder
 openmp
+openmp_linear
 serial
 serial_linear
