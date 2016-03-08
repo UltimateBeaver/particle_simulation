@@ -5,3 +5,5 @@ openmp
 openmp_linear
 serial
 serial_linear
+mpi
+mpi_fast
