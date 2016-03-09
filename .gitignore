@@ -7,3 +7,4 @@ serial
 serial_linear
 mpi
 mpi_fast
+mpi_aggressive
