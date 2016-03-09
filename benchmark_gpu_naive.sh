@@ -1,0 +1,10 @@
+srun -p gpudev -n 1 -t 1:00:00 ./gpu -n 316
+srun -p gpudev -n 1 -t 1:00:00 ./gpu -n 1000
+srun -p gpudev -n 1 -t 1:00:00 ./gpu -n 3160
+srun -p gpudev -n 1 -t 1:00:00 ./gpu -n 10000
+srun -p gpudev -n 1 -t 1:00:00 ./gpu -n 31600
+srun -p gpudev -n 1 -t 1:00:00 ./gpu -n 100000
+srun -p gpudev -n 1 -t 1:00:00 ./gpu -n 316000
+srun -p gpudev -n 1 -t 1:00:00 ./gpu -n 1000000
+srun -p gpudev -n 1 -t 1:00:00 ./gpu -n 3160000
+srun -p gpudev -n 1 -t 1:00:00 ./gpu -n 10000000
