@@ -411,6 +411,7 @@ int main( int argc, char **argv )
     
         cout << " -------------9--------------" << endl;
     MPI_Finalize( );
+        cout << " -------------10--------------" << endl;
     
     return 0;
 }
