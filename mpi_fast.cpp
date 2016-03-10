@@ -108,7 +108,7 @@ void move_particles(bin_t& remote_move, vector<bin_t>& bins, int row_start, int 
                 if (row_start <= y && y < row_end) 
                 {
                     // if still belongs to original bin
-                    if (x == i && y == j)
+                    if (x == j && y == i)
                         ++k;
                     else 
                     {

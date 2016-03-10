@@ -122,7 +122,7 @@ void move_particles(bin_t& remote_move, vector<bin_t>& bins, int row_start, int 
                 if (row_start <= y && y < row_end) 
                 {
                     // if still belongs to original bin
-                    if (x == i && y == j)
+                    if (x == j && y == i)
                         ++k;
                     else 
                     {
@@ -223,8 +223,7 @@ int main( int argc, char **argv )
     //  simulate a number of time steps
     //
     double simulation_time = read_timer( );
-    //for( int step = 0; step < NSTEPS; step++ )
-    for( int step = 0; step < 1; step++ )
+    for( int step = 0; step < NSTEPS; step++ )
     {
         navg = 0;
         dmin = 1.0;
@@ -236,8 +235,6 @@ int main( int argc, char **argv )
             }
         }
 
-        cout << " -------------1--------------" << endl;
-
         // move particles and extract pariticles need to be moved to other processors 
         bin_t remote_move;
         move_particles(remote_move, bins, row_start, row_end);
@@ -248,7 +245,6 @@ int main( int argc, char **argv )
             clear_all_bins_in_row(row_end, bins);
         }
 
-        cout << " -------------2--------------" << endl;
         if (rank == 0)
             clear_all_bins_in_row(row_end, bins);
         if (rank == n_proc - 1) 
@@ -266,7 +262,6 @@ int main( int argc, char **argv )
             MPI_Isend(down_data.data(), down_data.size(), PARTICLE, rank + 1, 0, MPI_COMM_WORLD, &down_req);
         }
 
-        cout << " -------------3--------------" << endl;
         MPI_Status status;
         int up_amount, down_amount;
         bin_t up_recv_data, down_recv_data;
@@ -289,7 +284,6 @@ int main( int argc, char **argv )
                 bin_particle(bins, down_recv_data[i]);
         }
 
-        cout << " -------------4--------------" << endl;
         // root gathers send_count from all processes into recv_counts
         int send_count = remote_move.size();
         int recv_counts[n_proc];
@@ -313,7 +307,6 @@ int main( int argc, char **argv )
         MPI_Gatherv(remote_move.data(), send_count, PARTICLE, 
                     incoming_move.data(), recv_counts, offsets, PARTICLE, 0, MPI_COMM_WORLD);
 
-        cout << " -------------5--------------" << endl;
         vector<bin_t> scatter_particles;
         if (rank == 0) {
             // root process all particles in incoming_move and decide which processors to send to 
@@ -341,7 +334,6 @@ int main( int argc, char **argv )
             }
         }
 
-        cout << " -------------6--------------" << endl;
         send_count = 0;
         MPI_Scatter(recv_counts, 1, MPI_INT, &send_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
         
@@ -357,7 +349,6 @@ int main( int argc, char **argv )
             bin_particle(bins, outgoing_move[i]);
         }
 
-        cout << " -------------7--------------" << endl;
         if (find_option( argc, argv, "-no" ) == -1) {
           MPI_Reduce(&davg,&rdavg,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
           MPI_Reduce(&navg,&rnavg,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
@@ -393,7 +384,6 @@ int main( int argc, char **argv )
       }
       printf("\n");     
         
-        cout << " -------------8--------------" << endl;
       //  
       // Printing summary data
       //  
@@ -409,9 +399,7 @@ int main( int argc, char **argv )
     if( fsave )
         fclose( fsave );
     
-        cout << " -------------9--------------" << endl;
     MPI_Finalize( );
-        cout << " -------------10--------------" << endl;
     
     return 0;
 }
