@@ -6,6 +6,7 @@
 #include <cmath>
 #include <signal.h>
 #include <unistd.h>
+#include <iostream>
 #include "common.h"
 
 using namespace std;
