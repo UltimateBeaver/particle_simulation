@@ -393,6 +393,7 @@ int main( int argc, char **argv )
       }
       printf("\n");     
         
+        cout << " -------------8--------------" << endl;
       //  
       // Printing summary data
       //  
@@ -408,6 +409,7 @@ int main( int argc, char **argv )
     if( fsave )
         fclose( fsave );
     
+        cout << " -------------9--------------" << endl;
     MPI_Finalize( );
     
     return 0;
