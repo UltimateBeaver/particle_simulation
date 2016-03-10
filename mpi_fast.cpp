@@ -65,8 +65,13 @@ void apply_forces_bin(vector<bin_t>& bins, int i, int j, double& dmin, double& d
         highi = 0;
     if (cbin >= bin_count * (bin_count - 1))
         highj = 0;
-    
-    for (int k = 0; k < cvec.size(); ++k)
+    /*
+    cout << i << " " << j << endl;
+    cout << lowi << " " << highi << endl;
+    cout << lowj << " " << highj << endl;
+    */
+
+    for (int k = 0; k < bins[cbin].size(); ++k)
         cvec[k].ax = cvec[k].ay = 0;
 
     for (int ii = lowi; ii <= highi; ii++)
@@ -103,7 +108,7 @@ void move_particles(bin_t& remote_move, vector<bin_t>& bins, int row_start, int 
                 if (row_start <= y && y < row_end) 
                 {
                     // if still belongs to original bin
-                    if (x == j && y == i)
+                    if (x == i && y == j)
                         ++k;
                     else 
                     {
@@ -216,20 +221,6 @@ int main( int argc, char **argv )
             }
         }
 
-        if (find_option( argc, argv, "-no" ) == -1) {
-          MPI_Reduce(&davg,&rdavg,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
-          MPI_Reduce(&navg,&rnavg,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
-          MPI_Reduce(&dmin,&rdmin,1,MPI_DOUBLE,MPI_MIN,0,MPI_COMM_WORLD);
-          if (rank == 0){
-            if (rnavg) {
-              absavg +=  rdavg/rnavg;
-              nabsavg++;
-            }
-            if (rdmin < absmin) 
-                absmin = rdmin;
-          }
-        }
-
         // move particles and extract pariticles need to be moved to other processors 
         bin_t remote_move;
         move_particles(remote_move, bins, row_start, row_end);
@@ -323,7 +314,19 @@ int main( int argc, char **argv )
             bin_particle(bins, outgoing_move[i]);
         }
 
-
+        if (find_option( argc, argv, "-no" ) == -1) {
+          MPI_Reduce(&davg,&rdavg,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
+          MPI_Reduce(&navg,&rnavg,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
+          MPI_Reduce(&dmin,&rdmin,1,MPI_DOUBLE,MPI_MIN,0,MPI_COMM_WORLD);
+          if (rank == 0){
+            if (rnavg) {
+              absavg +=  rdavg/rnavg;
+              nabsavg++;
+            }
+            if (rdmin < absmin) 
+                absmin = rdmin;
+          }
+        }
     }
     simulation_time = read_timer( ) - simulation_time;
   
