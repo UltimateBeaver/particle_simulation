@@ -102,13 +102,13 @@ void move_particles(bin_t& remote_move, vector<bin_t>& bins, int row_start, int 
             for (; k < tail; ) 
             {
                 move(bin[k]);
-                int x = int(bin[k].x / bin_size);
-                int y = int(bin[k].y / bin_size);
+                int col_bin = int(bin[k].x / bin_size);
+                int row_bin = int(bin[k].y / bin_size);
                 // if still belongs to me
-                if (row_start <= y && y < row_end) 
+                if (row_start <= row_bin and row_bin < row_end) 
                 {
                     // if still belongs to original bin
-                    if (x == j && y == i)
+                    if (col_bin == j and row_bin == i)
                         ++k;
                     else 
                     {
@@ -233,12 +233,12 @@ int main( int argc, char **argv )
             copy_and_clear_all_bins_in_row(row_end-1, bins, remote_move);
         }
 
-        if (rank == 0)
+        if (rank == 0 and rank != n_proc - 1)
         {
             clear_all_bins_in_row(row_end, bins);
             copy_and_clear_all_bins_in_row(row_end-1, bins, remote_move);
         }
-        if (rank == n_proc - 1) 
+        if (rank == n_proc - 1 and rank != 0) 
         {
            clear_all_bins_in_row(row_start - 1, bins);
            copy_and_clear_all_bins_in_row(row_start, bins, remote_move); 
