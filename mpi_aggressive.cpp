@@ -252,12 +252,12 @@ int main( int argc, char **argv )
         }
         //cout << "--- rank: " << rank << " ---- (1.2) ---" << endl;
 
-        if (rank == 0)
+        if (rank == 0 and rank != n_proc - 1)
             clear_all_bins_in_row(row_end, bins);
 
         //cout << "--- rank: " << rank << " ---- (1.3) ---" << endl;
 
-        if (rank == n_proc - 1) 
+        if (rank == n_proc - 1 and rank != 0) 
            clear_all_bins_in_row(row_start - 1, bins);
 
         //cout << "--- rank: " << rank << " ---- before send (2) ---" << endl;
