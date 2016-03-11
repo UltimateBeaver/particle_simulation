@@ -237,19 +237,23 @@ int main( int argc, char **argv )
         }
 
         cout << "--- rank: " << rank << " ---- after apply forces (1) ---" << endl;
-        
+
         // move particles and extract pariticles need to be moved to other processors 
         bin_t remote_move;
         move_particles(remote_move, bins, row_start, row_end);
+        cout << "--- rank: " << rank << " ---- after move pariticles (1.1) ---" << endl;
 
         if (rank != 0 and rank != n_proc - 1) 
         {
             clear_all_bins_in_row(row_start - 1, bins);
             clear_all_bins_in_row(row_end, bins);
         }
+        cout << "--- rank: " << rank << " ---- (1.2) ---" << endl;
 
         if (rank == 0)
             clear_all_bins_in_row(row_end, bins);
+
+        cout << "--- rank: " << rank << " ---- (1.3) ---" << endl;
 
         if (rank == n_proc - 1) 
            clear_all_bins_in_row(row_start - 1, bins);
