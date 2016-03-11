@@ -236,8 +236,8 @@ int main( int argc, char **argv )
             }
         }
 
-        cout << "----------after apply forces----------" << endl;
-        cout << n_proc << endl;
+        cout << "--- rank: " << rank << " ---- after apply forces (1) ---" << endl;
+        
         // move particles and extract pariticles need to be moved to other processors 
         bin_t remote_move;
         move_particles(remote_move, bins, row_start, row_end);
@@ -254,7 +254,7 @@ int main( int argc, char **argv )
         if (rank == n_proc - 1) 
            clear_all_bins_in_row(row_start - 1, bins);
 
-        cout << "----------before send----------" << endl;
+        cout << "--- rank: " << rank << " ---- before send (2) ---" << endl;
         MPI_Request up_req, down_req;
         if (rank != 0)
         {
@@ -267,6 +267,7 @@ int main( int argc, char **argv )
             MPI_Isend(down_data.data(), down_data.size(), PARTICLE, rank + 1, 0, MPI_COMM_WORLD, &down_req);
         }
 
+        cout << "--- rank: " << rank << " ---- before receive (3) ---" << endl;
         MPI_Status status;
         int up_amount, down_amount;
         bin_t up_recv_data, down_recv_data;
@@ -289,7 +290,7 @@ int main( int argc, char **argv )
                 bin_particle(bins, down_recv_data[i]);
         }
 
-        cout << "----------after receive----------" << endl;
+        cout << "--- rank: " << rank << " ---- after receive (4) ---" << endl;
         // root gathers send_count from all processes into recv_counts
         int send_count = remote_move.size();
         int recv_counts[n_proc];
@@ -313,7 +314,7 @@ int main( int argc, char **argv )
         MPI_Gatherv(remote_move.data(), send_count, PARTICLE, 
                     incoming_move.data(), recv_counts, offsets, PARTICLE, 0, MPI_COMM_WORLD);
 
-        cout << "----------after Gatherv----------" << endl;
+        cout << "--- rank: " << rank << " ---- after gatherv (5) ---" << endl;
         vector<bin_t> scatter_particles;
         if (rank == 0) {
             // root process all particles in incoming_move and decide which processors to send to 
@@ -343,6 +344,7 @@ int main( int argc, char **argv )
 
         send_count = 0;
         MPI_Scatter(recv_counts, 1, MPI_INT, &send_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        cout << "--- rank: " << rank << " ---- after scatter (6) ---" << endl;
         
         bin_t outgoing_move;
         outgoing_move.resize(send_count);
@@ -369,6 +371,7 @@ int main( int argc, char **argv )
                 absmin = rdmin;
           }
         }
+        cout << "--- rank: " << rank << " ---- end of timestep (7) ---" << endl;
     }
     simulation_time = read_timer( ) - simulation_time;
   
@@ -406,7 +409,7 @@ int main( int argc, char **argv )
     if( fsave )
         fclose( fsave );
     
-    cout << "----------before finalize----------" << endl;
+    cout << "--- rank: " << rank << " ---- before finalize (8) ---" << endl;
     MPI_Finalize( );
     
     return 0;
